@@ -1,0 +1,26 @@
+name: Docker Build
+
+on:
+  push:
+    branches: multiarch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          submodules: recursive
+      - name: Setup Buildx
+        id: buildx
+        uses: crazy-max/ghaction-docker-buildx@v3
+        with:
+          version: latest
+      - name: Login to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+      - name: Build Management API in docker
+        run: |
+          docker buildx build --push \
+            --tag johntrimble/cass-config-builder-multiarch:latest \
+            --file docker/Dockerfile \
+            --platform linux/amd64,linux/arm64 ./
