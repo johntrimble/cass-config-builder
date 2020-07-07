@@ -1,19 +1,24 @@
 # Copyright DataStax, Inc.
 # Please see the included license file for details.
+FROM --platform=linux/amd64 maven:3.6.3-adoptopenjdk-8 as builder
 
-FROM datastax/ds-base-debian-openjdk-8:8u252-jdk-slim-buster-20200602
+COPY . .
+
+RUN ./gradlew copyDockerBuildCtx
+
+FROM openjdk:8u212-jre-alpine3.9
 
 ENV USER_UID=1001 \
     USER_NAME=cass-operator \
     HOME=/home/$USER_NAME
 
 # Install the uber jar
-COPY *.jar /usr/local/bin/
+COPY --from=builder ./build/docker/*.jar /usr/local/bin/
 
 # Install definition files
-COPY definitions /definitions
+COPY --from=builder ./build/docker/definitions /definitions
 
-COPY bin/* /usr/local/bin/
+COPY --from=builder ./build/docker/bin/* /usr/local/bin/
 
 RUN  /usr/local/bin/user_setup
 
